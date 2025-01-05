@@ -73,7 +73,7 @@ export const MangaDex2Info: SourceInfo = {
         SourceIntents.HOMEPAGE_SECTIONS,
 };
 
-export class MangaDex
+export class MangaDex2
     implements
         ChapterProviding,
         SearchResultsProviding,
