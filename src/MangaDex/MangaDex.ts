@@ -63,7 +63,7 @@ export const MangaDexInfo: SourceInfo = {
     author: 'Nar1n & Netsky',
     description: 'Extension that pulls manga from MangaDex',
     icon: 'icon.png',
-    name: 'MangaDex',
+    name: 'MangaDex2',
     version: '3.0.5',
     authorWebsite: 'https://github.com/nar1n',
     websiteBaseURL: MANGADEX_DOMAIN,
