@@ -1447,7 +1447,7 @@ var _Sources = (() => {
   // src/MangaDex2/MangaDex2.ts
   var MangaDex2_exports = {};
   __export(MangaDex2_exports, {
-    MangaDex: () => MangaDex,
+    MangaDex2: () => MangaDex2,
     MangaDex2Info: () => MangaDex2Info
   });
   var import_types = __toESM(require_lib());
@@ -3288,7 +3288,7 @@ var _Sources = (() => {
     sourceTags: [],
     intents: import_types.SourceIntents.MANGA_CHAPTERS | import_types.SourceIntents.SETTINGS_UI | import_types.SourceIntents.HOMEPAGE_SECTIONS
   };
-  var MangaDex = class {
+  var MangaDex2 = class {
     constructor() {
       this.MANGADEX_DOMAIN = MANGADEX_DOMAIN;
       this.MANGADEX_API = MANGADEX_API;
