@@ -1444,15 +1444,15 @@ var _Sources = (() => {
     }
   });
 
-  // src/MangaDex/MangaDex.ts
-  var MangaDex_exports = {};
-  __export(MangaDex_exports, {
+  // src/MangaDex2/MangaDex2.ts
+  var MangaDex2_exports = {};
+  __export(MangaDex2_exports, {
     MangaDex: () => MangaDex,
     MangaDexInfo: () => MangaDexInfo
   });
   var import_types = __toESM(require_lib());
 
-  // src/MangaDex/MangaDexHelper.ts
+  // src/MangaDex2/MangaDexHelper.ts
   var MDLanguagesClass = class {
     constructor() {
       this.Languages = [
@@ -1856,7 +1856,7 @@ var _Sources = (() => {
   };
   var MDImageQuality = new MDImageQualityClass();
 
-  // src/MangaDex/MangaDexSettings.ts
+  // src/MangaDex2/MangaDexSettings.ts
   async function getLanguages(stateManager) {
     return await stateManager.retrieve("languages") ?? MDLanguages.getDefault();
   }
@@ -2180,7 +2180,7 @@ var _Sources = (() => {
     });
   }
 
-  // src/MangaDex/MangaDexParser.ts
+  // src/MangaDex2/MangaDexParser.ts
   var parseMangaList = async (object, source, thumbnailSelector) => {
     const results = [];
     for (const manga of object) {
@@ -2202,7 +2202,7 @@ var _Sources = (() => {
     return results;
   };
 
-  // src/MangaDex/external/tag.json
+  // src/MangaDex2/external/tag.json
   var tag_default = [
     {
       result: "ok",
@@ -3270,7 +3270,7 @@ var _Sources = (() => {
     }
   ];
 
-  // src/MangaDex/MangaDex.ts
+  // src/MangaDex2/MangaDex2.ts
   var entities = require_lib2();
   var MANGADEX_DOMAIN = "https://mangadex.org";
   var MANGADEX_API = "https://api.mangadex.org";
@@ -3637,6 +3637,6 @@ var _Sources = (() => {
       }
     }
   };
-  return __toCommonJS(MangaDex_exports);
+  return __toCommonJS(MangaDex2_exports);
 })();
 this.Sources = _Sources; if (typeof exports === 'object' && typeof module !== 'undefined') {module.exports.Sources = this.Sources;}
