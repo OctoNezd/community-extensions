@@ -1448,7 +1448,7 @@ var _Sources = (() => {
   var MangaDex2_exports = {};
   __export(MangaDex2_exports, {
     MangaDex: () => MangaDex,
-    MangaDexInfo: () => MangaDexInfo
+    MangaDex2Info: () => MangaDex2Info
   });
   var import_types = __toESM(require_lib());
 
@@ -3276,7 +3276,7 @@ var _Sources = (() => {
   var MANGADEX_API = "https://api.mangadex.org";
   var COVER_BASE_URL = "https://uploads.mangadex.org/covers";
   var SEASONAL_LIST = "77430796-6625-4684-b673-ffae5140f337";
-  var MangaDexInfo = {
+  var MangaDex2Info = {
     author: "Nar1n & Netsky",
     description: "Extension that pulls manga from MangaDex",
     icon: "icon.png",
@@ -3304,13 +3304,22 @@ var _Sources = (() => {
               referer: `${this.MANGADEX_DOMAIN}/`
             };
             let accessToken = await getAccessToken(this.stateManager);
-            if (request.url.includes("auth/") || !accessToken) return request;
+            if (request.url.includes("auth/") || !accessToken)
+              return request;
             if (Number(accessToken.tokenBody.exp) <= Date.now() / 1e3 - 60) {
               try {
-                const response = await authEndpointRequest(this.requestManager, "refresh", {
-                  token: accessToken.refreshToken
-                });
-                accessToken = await saveAccessToken(this.stateManager, response.token.session, response.token.refresh);
+                const response = await authEndpointRequest(
+                  this.requestManager,
+                  "refresh",
+                  {
+                    token: accessToken.refreshToken
+                  }
+                );
+                accessToken = await saveAccessToken(
+                  this.stateManager,
+                  response.token.session,
+                  response.token.refresh
+                );
                 if (!accessToken) return request;
               } catch {
                 return request;
@@ -3349,13 +3358,20 @@ var _Sources = (() => {
       for (const tag of tag_default) {
         const group = tag.data.attributes.group;
         if (sections[group] == null) {
-          sections[group] = App.createTagSection({ id: group, label: group.charAt(0).toUpperCase() + group.slice(1), tags: [] });
+          sections[group] = App.createTagSection({
+            id: group,
+            label: group.charAt(0).toUpperCase() + group.slice(1),
+            tags: []
+          });
         }
         const tagObject = App.createTag({
           id: tag.data.id,
           label: tag.data.attributes.name.en
         });
-        sections[group].tags = [...sections[group]?.tags ?? [], tagObject];
+        sections[group].tags = [
+          ...sections[group]?.tags ?? [],
+          tagObject
+        ];
       }
       return Object.values(sections);
     }
@@ -3373,31 +3389,52 @@ var _Sources = (() => {
       });
       const response = await this.requestManager.schedule(request, 1);
       const json = typeof response.data === "string" ? JSON.parse(response.data) : response.data;
-      return new URLBuilder(this.MANGADEX_API).addPathComponent("manga").addQueryParameter("limit", 100).addQueryParameter("contentRating", ratings).addQueryParameter("includes", ["cover_art"]).addQueryParameter("ids", json.data.relationships.filter((x) => x.type == "manga").map((x) => x.id)).buildUrl();
+      return new URLBuilder(this.MANGADEX_API).addPathComponent("manga").addQueryParameter("limit", 100).addQueryParameter("contentRating", ratings).addQueryParameter("includes", ["cover_art"]).addQueryParameter(
+        "ids",
+        json.data.relationships.filter((x) => x.type == "manga").map((x) => x.id)
+      ).buildUrl();
     }
     async getMangaDetails(mangaId) {
       this.checkId(mangaId);
       const request = App.createRequest({
-        url: new URLBuilder(this.MANGADEX_API).addPathComponent("manga").addPathComponent(mangaId).addQueryParameter("includes", ["author", "artist", "cover_art"]).buildUrl(),
+        url: new URLBuilder(this.MANGADEX_API).addPathComponent("manga").addPathComponent(mangaId).addQueryParameter("includes", [
+          "author",
+          "artist",
+          "cover_art"
+        ]).buildUrl(),
         method: "GET"
       });
       const response = await this.requestManager.schedule(request, 1);
       const json = typeof response.data === "string" ? JSON.parse(response.data) : response.data;
       const mangaDetails = json.data.attributes;
-      const titles = [...Object.values(mangaDetails.title), ...mangaDetails.altTitles.flatMap((x) => Object.values(x))].map((x) => this.decodeHTMLEntity(x)).filter((x) => x);
-      const desc = this.decodeHTMLEntity(mangaDetails.description.en)?.replace(/\[\/?[bus]]/g, "");
+      const titles = [
+        ...Object.values(mangaDetails.title),
+        ...mangaDetails.altTitles.flatMap(
+          (x) => Object.values(x)
+        )
+      ].map((x) => this.decodeHTMLEntity(x)).filter((x) => x);
+      const desc = this.decodeHTMLEntity(
+        mangaDetails.description.en
+      )?.replace(/\[\/?[bus]]/g, "");
       const status = mangaDetails.status;
       const tags = [];
       for (const tag of mangaDetails.tags) {
         const tagName = tag.attributes.name;
-        tags.push(App.createTag({ id: tag.id, label: Object.keys(tagName).map((keys) => tagName[keys])[0] ?? "Unknown" }));
+        tags.push(
+          App.createTag({
+            id: tag.id,
+            label: Object.keys(tagName).map((keys) => tagName[keys])[0] ?? "Unknown"
+          })
+        );
       }
       const author = json.data.relationships.filter((x) => x.type == "author").map((x) => x.attributes.name).join(", ");
       const artist = json.data.relationships.filter((x) => x.type == "artist").map((x) => x.attributes.name).join(", ");
       let image = "";
       const coverFileName = json.data.relationships.filter((x) => x.type == "cover_art").map((x) => x.attributes?.fileName)[0];
       if (coverFileName) {
-        image = `${this.COVER_BASE_URL}/${mangaId}/${coverFileName}${MDImageQuality.getEnding(await getMangaThumbnail(this.stateManager))}`;
+        image = `${this.COVER_BASE_URL}/${mangaId}/${coverFileName}${MDImageQuality.getEnding(
+          await getMangaThumbnail(this.stateManager)
+        )}`;
       }
       return App.createSourceManga({
         id: mangaId,
@@ -3408,7 +3445,13 @@ var _Sources = (() => {
           artist,
           desc: desc ?? "No Description",
           status,
-          tags: [App.createTagSection({ id: "tags", label: "Tags", tags })]
+          tags: [
+            App.createTagSection({
+              id: "tags",
+              label: "Tags",
+              tags
+            })
+          ]
         })
       });
     }
@@ -3424,25 +3467,33 @@ var _Sources = (() => {
       let hasResults = true;
       while (hasResults) {
         const request = App.createRequest({
-          url: new URLBuilder(this.MANGADEX_API).addPathComponent("manga").addPathComponent(mangaId).addPathComponent("feed").addQueryParameter("limit", 500).addQueryParameter("offset", offset).addQueryParameter("includes", ["scanlation_group"]).addQueryParameter("translatedLanguage", languages).addQueryParameter("order", { volume: "desc", chapter: "desc", publishAt: "desc" }).addQueryParameter("contentRating", ratings).addQueryParameter("includeFutureUpdates", "0").buildUrl(),
+          url: new URLBuilder(this.MANGADEX_API).addPathComponent("manga").addPathComponent(mangaId).addPathComponent("feed").addQueryParameter("limit", 500).addQueryParameter("offset", offset).addQueryParameter("includes", ["scanlation_group"]).addQueryParameter("translatedLanguage", languages).addQueryParameter("order", {
+            volume: "desc",
+            chapter: "desc",
+            publishAt: "desc"
+          }).addQueryParameter("contentRating", ratings).addQueryParameter("includeFutureUpdates", "0").buildUrl(),
           method: "GET"
         });
         const response = await this.requestManager.schedule(request, 1);
         const json = typeof response.data === "string" ? JSON.parse(response.data) : response.data;
         offset += 500;
-        if (json.data === void 0) throw new Error(`Failed to parse json results for ${mangaId}`);
+        if (json.data === void 0)
+          throw new Error(`Failed to parse json results for ${mangaId}`);
         for (const chapter of json.data) {
           const chapterId = chapter.id;
           const chapterDetails = chapter.attributes;
           const name = this.decodeHTMLEntity(chapterDetails.title);
           const chapNum = Number(chapterDetails?.chapter);
           const volume = Number(chapterDetails?.volume);
-          const langCode = MDLanguages.getFlagCode(chapterDetails.translatedLanguage);
+          const langCode = MDLanguages.getFlagCode(
+            chapterDetails.translatedLanguage
+          );
           const time = new Date(chapterDetails.publishAt);
           const group = chapter.relationships.filter((x) => x.type == "scanlation_group").map((x) => x.attributes.name).join(", ");
           const pages = Number(chapterDetails.pages);
           const identifier = `${volume}-${chapNum}-${chapterDetails.translatedLanguage}`;
-          if (collectedChapters.has(identifier) && skipSameChapter) continue;
+          if (collectedChapters.has(identifier) && skipSameChapter)
+            continue;
           if (pages > 0) {
             chapters.push(
               App.createChapter({
@@ -3465,7 +3516,9 @@ var _Sources = (() => {
         }
       }
       if (chapters.length == 0) {
-        throw new Error(`Couldn't find any chapters in your selected language for mangaId: ${mangaId}!`);
+        throw new Error(
+          `Couldn't find any chapters in your selected language for mangaId: ${mangaId}!`
+        );
       }
       return chapters.map((chapter) => {
         chapter.sortingIndex += chapters.length;
@@ -3486,9 +3539,13 @@ var _Sources = (() => {
       const chapterDetails = json.chapter;
       let pages;
       if (dataSaver) {
-        pages = chapterDetails.dataSaver.map((x) => `${serverUrl}/data-saver/${chapterDetails.hash}/${x}`);
+        pages = chapterDetails.dataSaver.map(
+          (x) => `${serverUrl}/data-saver/${chapterDetails.hash}/${x}`
+        );
       } else {
-        pages = chapterDetails.data.map((x) => `${serverUrl}/data/${chapterDetails.hash}/${x}`);
+        pages = chapterDetails.data.map(
+          (x) => `${serverUrl}/data/${chapterDetails.hash}/${x}`
+        );
       }
       return App.createChapterDetails({
         id: chapterId,
@@ -3501,8 +3558,19 @@ var _Sources = (() => {
       const languages = await getLanguages(this.stateManager);
       const offset = metadata?.offset ?? 0;
       let results = [];
-      const searchType = query.title?.match(/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/i) ? "ids[]" : "title";
-      const url = new URLBuilder(this.MANGADEX_API).addPathComponent("manga").addQueryParameter(searchType, query?.title?.replace(/ /g, "+") || "").addQueryParameter("limit", 100).addQueryParameter("hasAvailableChapters", true).addQueryParameter("availableTranslatedLanguage", languages).addQueryParameter("offset", offset).addQueryParameter("contentRating", ratings).addQueryParameter("includes", ["cover_art"]).addQueryParameter("includedTags", query.includedTags?.map((x) => x.id)).addQueryParameter("includedTagsMode", query.includeOperator).addQueryParameter("excludedTags", query.excludedTags?.map((x) => x.id)).addQueryParameter("excludedTagsMode", query.excludeOperator).buildUrl();
+      const searchType = query.title?.match(
+        /[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/i
+      ) ? "ids[]" : "title";
+      const url = new URLBuilder(this.MANGADEX_API).addPathComponent("manga").addQueryParameter(
+        searchType,
+        query?.title?.replace(/ /g, "+") || ""
+      ).addQueryParameter("limit", 100).addQueryParameter("hasAvailableChapters", true).addQueryParameter("availableTranslatedLanguage", languages).addQueryParameter("offset", offset).addQueryParameter("contentRating", ratings).addQueryParameter("includes", ["cover_art"]).addQueryParameter(
+        "includedTags",
+        query.includedTags?.map((x) => x.id)
+      ).addQueryParameter("includedTagsMode", query.includeOperator).addQueryParameter(
+        "excludedTags",
+        query.excludedTags?.map((x) => x.id)
+      ).addQueryParameter("excludedTagsMode", query.excludeOperator).buildUrl();
       const request = App.createRequest({
         url,
         method: "GET"
@@ -3528,7 +3596,10 @@ var _Sources = (() => {
       const sections = [
         {
           request: App.createRequest({
-            url: await this.getCustomListRequestURL(SEASONAL_LIST, ratings),
+            url: await this.getCustomListRequestURL(
+              SEASONAL_LIST,
+              ratings
+            ),
             method: "GET"
           }),
           section: App.createHomeSection({
@@ -3540,7 +3611,10 @@ var _Sources = (() => {
         },
         {
           request: App.createRequest({
-            url: new URLBuilder(this.MANGADEX_API).addPathComponent("manga").addQueryParameter("limit", 20).addQueryParameter("hasAvailableChapters", true).addQueryParameter("availableTranslatedLanguage", languages).addQueryParameter("order", { followedCount: "desc" }).addQueryParameter("contentRating", ratings).addQueryParameter("includes", ["cover_art"]).buildUrl(),
+            url: new URLBuilder(this.MANGADEX_API).addPathComponent("manga").addQueryParameter("limit", 20).addQueryParameter("hasAvailableChapters", true).addQueryParameter(
+              "availableTranslatedLanguage",
+              languages
+            ).addQueryParameter("order", { followedCount: "desc" }).addQueryParameter("contentRating", ratings).addQueryParameter("includes", ["cover_art"]).buildUrl(),
             method: "GET"
           }),
           section: App.createHomeSection({
@@ -3552,7 +3626,12 @@ var _Sources = (() => {
         },
         {
           request: App.createRequest({
-            url: new URLBuilder(this.MANGADEX_API).addPathComponent("manga").addQueryParameter("limit", 20).addQueryParameter("hasAvailableChapters", true).addQueryParameter("availableTranslatedLanguage", languages).addQueryParameter("order", { latestUploadedChapter: "desc" }).addQueryParameter("contentRating", ratings).addQueryParameter("includes", ["cover_art"]).buildUrl(),
+            url: new URLBuilder(this.MANGADEX_API).addPathComponent("manga").addQueryParameter("limit", 20).addQueryParameter("hasAvailableChapters", true).addQueryParameter(
+              "availableTranslatedLanguage",
+              languages
+            ).addQueryParameter("order", {
+              latestUploadedChapter: "desc"
+            }).addQueryParameter("contentRating", ratings).addQueryParameter("includes", ["cover_art"]).buildUrl(),
             method: "GET"
           }),
           section: App.createHomeSection({
@@ -3564,7 +3643,10 @@ var _Sources = (() => {
         },
         {
           request: App.createRequest({
-            url: new URLBuilder(this.MANGADEX_API).addPathComponent("manga").addQueryParameter("limit", 20).addQueryParameter("hasAvailableChapters", true).addQueryParameter("availableTranslatedLanguage", languages).addQueryParameter("order", { createdAt: "desc" }).addQueryParameter("contentRating", ratings).addQueryParameter("includes", ["cover_art"]).buildUrl(),
+            url: new URLBuilder(this.MANGADEX_API).addPathComponent("manga").addQueryParameter("limit", 20).addQueryParameter("hasAvailableChapters", true).addQueryParameter(
+              "availableTranslatedLanguage",
+              languages
+            ).addQueryParameter("order", { createdAt: "desc" }).addQueryParameter("contentRating", ratings).addQueryParameter("includes", ["cover_art"]).buildUrl(),
             method: "GET"
           }),
           section: App.createHomeSection({
@@ -3581,9 +3663,15 @@ var _Sources = (() => {
           this.requestManager.schedule(section.request, 1).then(async (response) => {
             const json = typeof response.data === "string" ? JSON.parse(response.data) : response.data;
             if (json.data === void 0) {
-              throw new Error(`Failed to parse json results for section ${section.section.title}`);
+              throw new Error(
+                `Failed to parse json results for section ${section.section.title}`
+              );
             }
-            section.section.items = await parseMangaList(json.data, this, getHomepageThumbnail);
+            section.section.items = await parseMangaList(
+              json.data,
+              this,
+              getHomepageThumbnail
+            );
             sectionCallback(section.section);
           })
         );
@@ -3603,7 +3691,9 @@ var _Sources = (() => {
           break;
         }
         case "latest_updates": {
-          url = new URLBuilder(this.MANGADEX_API).addPathComponent("manga").addQueryParameter("limit", 100).addQueryParameter("hasAvailableChapters", true).addQueryParameter("availableTranslatedLanguage", languages).addQueryParameter("order", { latestUploadedChapter: "desc" }).addQueryParameter("offset", offset).addQueryParameter("contentRating", ratings).addQueryParameter("includes", ["cover_art"]).buildUrl();
+          url = new URLBuilder(this.MANGADEX_API).addPathComponent("manga").addQueryParameter("limit", 100).addQueryParameter("hasAvailableChapters", true).addQueryParameter("availableTranslatedLanguage", languages).addQueryParameter("order", {
+            latestUploadedChapter: "desc"
+          }).addQueryParameter("offset", offset).addQueryParameter("contentRating", ratings).addQueryParameter("includes", ["cover_art"]).buildUrl();
           break;
         }
         case "recently_Added": {
@@ -3618,7 +3708,9 @@ var _Sources = (() => {
       const response = await this.requestManager.schedule(request, 1);
       const json = typeof response.data === "string" ? JSON.parse(response.data) : response.data;
       if (json.data === void 0) {
-        throw new Error("Failed to parse json results for getViewMoreItems");
+        throw new Error(
+          "Failed to parse json results for getViewMoreItems"
+        );
       }
       results = await parseMangaList(json.data, this, getHomepageThumbnail);
       return App.createPagedResults({
@@ -3633,7 +3725,9 @@ var _Sources = (() => {
     }
     checkId(id) {
       if (!id.includes("-")) {
-        throw new Error("OLD ID: PLEASE REFRESH AND CLEAR ORPHANED CHAPTERS");
+        throw new Error(
+          "OLD ID: PLEASE REFRESH AND CLEAR ORPHANED CHAPTERS"
+        );
       }
     }
   };
